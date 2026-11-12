@@ -1,0 +1,27 @@
+name: CI
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  package-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.11', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install package and test dependencies
+        run: python -m pip install -e '.[test]'
+      - name: Unit tests (CPU-only, no torch required)
+        run: python -m pytest -q
+      - name: CLI smoke test
+        run: |
+          opbench --help
+          opbench topk --help
+          opbench act-quant --help
+      - name: Build wheel and sdist
+        run: python -m build
