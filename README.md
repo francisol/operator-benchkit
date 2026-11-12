@@ -24,8 +24,11 @@ python -m pytest -q
 
 ```bash
 opbench topk --tokens 1 --tokens 16 --tokens 64 \
-  --dims 1024 --dims 4096 --ks 1 --ks 8 \
+  --m-start 1024 --m-stop 8196 --m-step 1024 --ks 1 --ks 8 \
   --dtype bf16 --mode graph --check --csv topk.csv
+
+# To test only selected M values:
+opbench topk --dims 1024 --dims 4096 --dims 8196 --ks 8
 
 opbench act-quant --tokens 1 --tokens 16 --dims 1024 \
   --dtype bf16 --mode graph --check --csv act_quant.csv
@@ -34,7 +37,7 @@ opbench act-quant --tokens 1 --tokens 16 --dims 1024 \
 opbench topk --impl my_adapter:run --tokens 64 --dims 4096 --ks 8
 ```
 
-Click `multiple=True` flags must be repeated for each value. See `opbench <operator> --help`.
+Range mode includes both --m-start and --m-stop (even if the step does not evenly divide the interval); explicit --dims and range mode cannot be combined. Without either option, the default M sizes are 1024 and 4096. Click `multiple=True` flags must be repeated for each value. See `opbench <operator> --help`.
 
 ### Measurement methodology
 
