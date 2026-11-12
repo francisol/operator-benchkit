@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "operator-benchkit"
+version = "0.1.0"
+description = "Extensible HIP/CUDA GPU operator microbenchmark CLI"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+authors = []
+keywords = ["gpu", "hip", "cuda", "benchmark", "pytorch"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Operating System :: POSIX :: Linux",
+    "Topic :: System :: Benchmark",
+]
+dependencies = ["click>=8.1,<9"]
+
+[project.optional-dependencies]
+test = ["pytest>=7.4", "build>=1.0"]
+# Install PyTorch separately using a wheel matching the local DTK/ROCm/CUDA stack.
+
+[project.scripts]
+opbench = "benchkit.cli:cli"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["benchkit*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 110
