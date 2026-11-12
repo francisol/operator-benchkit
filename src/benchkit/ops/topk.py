@@ -50,14 +50,34 @@ def make_case(tokens, dim, k, dtype, adapter, impl):
     return Case(fn, check, logical_bytes, {'tokens': tokens, 'dim': dim, 'k': k, 'implementation': impl})
 
 
+def resolve_dims(dims, m_start, m_stop, m_step):
+    """Resolve either explicitly listed M values or an inclusive M sweep."""
+    if m_start is None and m_stop is None:
+        return dims or (1024, 4096)
+    if m_start is None or m_stop is None:
+        raise click.UsageError('--m-start and --m-stop must be supplied together')
+    if dims:
+        raise click.UsageError('Use --dims or --m-start/--m-stop, not both')
+    if m_start > m_stop:
+        raise click.BadParameter('must be <= --m-stop', param_hint='--m-start')
+    values = list(range(m_start, m_stop + 1, m_step))
+    if values[-1] != m_stop:
+        values.append(m_stop)
+    return tuple(values)
+
+
 @click.command('topk')
 @click.option('--tokens', multiple=True, type=click.IntRange(min=1), default=(1, 16, 64), show_default=True)
-@click.option('--dims', multiple=True, type=click.IntRange(min=1), default=(1024, 4096), show_default=True)
+@click.option('--dims', multiple=True, type=click.IntRange(min=1), default=(), help='Explicit M sizes; repeat for multiple values')
+@click.option('--m-start', type=click.IntRange(min=1), default=None, help='First M for range sweep')
+@click.option('--m-stop', type=click.IntRange(min=1), default=None, help='Inclusive last M for range sweep')
+@click.option('--m-step', type=click.IntRange(min=1), default=1024, show_default=True, help='M increment in sweep')
 @click.option('--ks', multiple=True, type=click.IntRange(min=1), default=(1, 8, 32), show_default=True)
 @click.option('--impl', default='torch', show_default=True, help='torch or module:function or /path/file.py:function')
 @common_options
-def cli(tokens, dims, ks, impl, **common):
+def cli(tokens, dims, m_start, m_stop, m_step, ks, impl, **common):
     """Benchmark Top-K values and indices along the final dimension."""
+    dims = resolve_dims(dims, m_start, m_stop, m_step)
     for dim in dims:
         for k in ks:
             if k > dim:
